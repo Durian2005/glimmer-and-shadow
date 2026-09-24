@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微光与暗影 - 网页版视觉小说</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+        }
+        /* 背景容器：全屏显示场景背景 */
+        .bg-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3); /* 暗化背景突出前景 */
+        }
+        .bg-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            background-size: cover;
+            background-position: center;
+        }
+        /* 角色立绘容器：左右布局，默认隐藏 */
+        .character-container {
+            position: fixed;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+        }
+        .character {
+            width: 220px;
+            height: 350px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+            padding: 10px;
+        }
+        .character.show {
+            display: flex;
+        }
+        /* 文本框容器：固定底部 */
+        .text-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 30px;
+            z-index: 2;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .text-speaker {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+        .text-content {
+            font-size: 16px;
+            line-height: 1.5;
+            min-height: 60px;
+        }
+        .text-tip {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            font-size: 14px;
+            color: #ccc;
+        }
+        /* 选择分支容器：默认隐藏 */
+        .choice-container {
+            position: fixed;
+            bottom: 210px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            display: none;
+        }
+        .choice-btn {
+            padding: 12px 24px;
+            margin: 0 15px;
+            background: rgba(70, 130, 180, 0.9);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .choice-btn:hover {
+            background: rgba(100, 149, 237, 1);
+            transform: translateY(-2px);
+        }
+        /* 回退按钮 */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 8px 16px;
+            background: rgba(169, 169, 169, 0.8);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 4;
+            transition: all 0.3s;
+        }
+        .back-btn:hover {
+            background: rgba(128, 128, 128, 1);
+        }
+        .back-btn:disabled {
+            background: rgba(169, 169, 169, 0.3);
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- 回退按钮 -->
+    <button class="back-btn" id="backBtn" disabled>返回上一步</button>
+
+    <!-- 背景容器 -->
+    <div class="bg-container" id="bgContainer">
+        <div class="bg-content" id="bgContent">宁静谷小镇</div>
+    </div>
+
+    <!-- 角色立绘容器 -->
+    <div class="character-container" id="characterContainer">
+        <div class="character" id="leo">
+            <img src="images/leo.png" alt="利奥" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+        </div>
+        <div class="character" id="aira">
+            <img src="images/aira.png" alt="艾拉" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+        </div>
+        <div class="character" id="morgan">
+            <img src="images/morgan.png" alt="莫尔根" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+        </div>
+        <div class="character" id="villagerA">
+            <img src="images/villagerA.png" alt="村民A" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+        </div>
+        <div class="character" id="villageChief">
+            <img src="images/villageChief.png" alt="村长" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+        </div>
+        <div class="character" id="illusionMorgan">
+            <img src="images/illusionMorgan.png" alt="幻象莫尔根" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+        </div>
+    </div>
+
+    <!-- 文本框容器 -->
+    <div class="text-container" id="textContainer" onclick="nextDialog()">
+        <div class="text-speaker" id="textSpeaker">旁白</div>
+        <div class="text-content" id="textContent">黄昏时分，宁静谷小镇突然被诡异的黑雾笼罩，村民们陷入了恐慌...</div>
+        <div class="text-tip">点击继续</div>
+    </div>
+
+    <!-- 选择分支容器 -->
+    <div class="choice-container" id="choiceContainer"></div>
+
+    <script>
+        // 1. 剧情数据：严格对应剧本节点，包含场景、背景描述、角色、对话、选择分支等
+        const storyData = [
+            // 核心设定（旁白介绍）
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "宁静谷小镇原本是个祥和的地方，直到黑森林中的黑魔法师莫尔根因寻女执念，操控暗影生物封锁了小镇。17岁的铁匠学徒利奥，怀揣着勇者梦，决定踏上拯救小镇的旅程。",
+                scene: "小镇广场 - 黄昏",
+                bgDesc: "橙红色夕阳下，小镇边缘升起黑色雾气，村民们惊慌逃窜，广场公告栏旁围满焦虑的人",
+                bgImage: "images/town_square_dusk.jpg", // 新增：小镇广场黄昏图
+                showCharacters: []
+            },
+            // 第一幕：危机降临
+            {
+                type: "dialog",
+                speaker: "村民A",
+                content: "黑雾又近了！昨天王大叔家的牛就被雾里的东西拖走了……",
+                scene: "小镇广场 - 黄昏",
+                bgDesc: "橙红色夕阳下，小镇边缘升起黑色雾气，村民们惊慌逃窜，广场公告栏旁围满焦虑的人",
+                bgImage: "images/town_square_dusk.jpg", // 复用小镇广场黄昏图
+                showCharacters: ["villagerA"]
+            },
+            {
+                type: "dialog",
+                speaker: "村长",
+                content: "只有找到黑森林里的莫尔根，让他解除诅咒，小镇才能得救。可谁愿意去？",
+                scene: "小镇广场 - 黄昏",
+                bgDesc: "橙红色夕阳下，小镇边缘升起黑色雾气，村民们惊慌逃窜，广场公告栏旁围满焦虑的人",
+                bgImage: "images/town_square_dusk.jpg", // 复用小镇广场黄昏图
+                showCharacters: ["villageChief"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥攥紧腰间的旧剑，从人群中走出。",
+                scene: "小镇广场 - 黄昏",
+                bgDesc: "橙红色夕阳下，小镇边缘升起黑色雾气，村民们惊慌逃窜，广场公告栏旁围满焦虑的人",
+                bgImage: "images/town_square_dusk.jpg", // 复用小镇广场黄昏图
+                showCharacters: ["leo", "villageChief"]
+            },
+            {
+                type: "dialog",
+                speaker: "利奥",
+                content: "我去！我父亲曾是守护小镇的勇者，现在该我了。",
+                scene: "小镇广场 - 黄昏",
+                bgDesc: "橙红色夕阳下，小镇边缘升起黑色雾气，村民们惊慌逃窜，广场公告栏旁围满焦虑的人",
+                bgImage: "images/town_square_dusk.jpg", // 复用小镇广场黄昏图
+                showCharacters: ["leo", "villageChief"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "艾拉从药剂屋走出，递给利奥一瓶绿色药剂。",
+                scene: "小镇广场 - 黄昏",
+                bgDesc: "橙红色夕阳下，小镇边缘升起黑色雾气，村民们惊慌逃窜，广场公告栏旁围满焦虑的人",
+                bgImage: "images/town_square_dusk.jpg", // 复用小镇广场黄昏图
+                showCharacters: ["leo", "aira"]
+            },
+            {
+                type: "dialog",
+                speaker: "艾拉",
+                content: "这是清醒药剂，黑雾会让人产生幻觉。另外，黑森林里有两条路：左边是捷径，直通暗影洞穴；右边是布满陷阱的古道，但据说藏着对抗暗影的宝物。",
+                scene: "小镇广场 - 黄昏",
+                bgDesc: "橙红色夕阳下，小镇边缘升起黑色雾气，村民们惊慌逃窜，广场公告栏旁围满焦虑的人",
+                bgImage: "images/town_square_dusk.jpg", // 复用小镇广场黄昏图
+                showCharacters: ["leo", "aira"]
+            },
+            // 选择节点1：选择路径
+            {
+                type: "choice",
+                speaker: "旁白",
+                content: "你需要选择进入黑森林的路径：",
+                scene: "黑森林入口 - 黄昏",
+                bgDesc: "黑森林入口，两棵巨大的古树矗立两侧，左侧路径狭窄幽暗，右侧路径布满藤蔓",
+                bgImage: "images/forest_entrance.jpg", // 新增：黑森林入口图
+                showCharacters: ["leo", "aira"],
+                choices: [
+                    { text: "选择左边捷径", nextIndex: 8 }, // 分支A起始
+                    { text: "选择右边古道", nextIndex: 17 } // 分支B起始
+                ]
+            },
+            // 分支A：选择左边捷径
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥选择了左边的捷径，踏入了幽暗的林间小道。",
+                scene: "黑森林捷径 - 夜晚",
+                bgDesc: "狭窄的林间小道，黑雾弥漫，两侧树木扭曲成怪物形状，远处传来诡异的嘶吼",
+                bgImage: "images/dark_forest_path.jpg", // 新增：幽暗林间小道图
+                showCharacters: ["leo"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥前进不久，突然被暗影缠绕，眼前浮现父亲被莫尔根击败的幻象。",
+                scene: "黑森林捷径 - 夜晚",
+                bgDesc: "狭窄的林间小道，黑雾弥漫，两侧树木扭曲成怪物形状，远处传来诡异的嘶吼",
+                bgImage: "images/dark_forest_path.jpg", // 复用幽暗林间小道图
+                showCharacters: ["leo", "illusionMorgan"]
+            },
+            {
+                type: "dialog",
+                speaker: "幻象莫尔根",
+                content: "你和你父亲一样弱小，还想拯救小镇？放弃吧！",
+                scene: "黑森林捷径 - 夜晚",
+                bgDesc: "狭窄的林间小道，黑雾弥漫，两侧树木扭曲成怪物形状，远处传来诡异的嘶吼",
+                bgImage: "images/dark_forest_path.jpg", // 复用幽暗林间小道图
+                showCharacters: ["leo", "illusionMorgan"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥头痛欲裂，下意识喝下清醒药剂，幻象消散，但旧剑的剑刃开始变暗。",
+                scene: "黑森林捷径 - 夜晚",
+                bgDesc: "狭窄的林间小道，黑雾弥漫，两侧树木扭曲成怪物形状，远处传来诡异的嘶吼",
+                bgImage: "images/dark_forest_path.jpg", // 复用幽暗林间小道图
+                showCharacters: ["leo"]
+            },
+            {
+                type: "dialog",
+                speaker: "利奥",
+                content: "不能……被幻觉迷惑！",
+                scene: "黑森林捷径 - 夜晚",
+                bgDesc: "狭窄的林间小道，黑雾弥漫，两侧树木扭曲成怪物形状，远处传来诡异的嘶吼",
+                bgImage: "images/dark_forest_path.jpg", // 复用幽暗林间小道图
+                showCharacters: ["leo"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥继续前进，抵达暗影洞穴入口，却发现洞穴大门被暗影屏障封锁，无法进入。",
+                scene: "暗影洞穴入口 - 夜晚",
+                bgDesc: "暗影洞穴入口，巨大的石门紧闭，石门上覆盖着黑色的暗影屏障，散发着阴冷的气息",
+                bgImage: "images/cave_entrance.jpg", // 新增：暗影洞穴入口图
+                showCharacters: ["leo"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "此时，艾拉突然出现，身上带着轻微伤痕。",
+                scene: "暗影洞穴入口 - 夜晚",
+                bgDesc: "暗影洞穴入口，巨大的石门紧闭，石门上覆盖着黑色的暗影屏障，散发着阴冷的气息",
+                bgImage: "images/cave_entrance.jpg", // 复用暗影洞穴入口图
+                showCharacters: ["leo", "aira"]
+            },
+            {
+                type: "dialog",
+                speaker: "艾拉",
+                content: "我就知道你会选捷径……这屏障需要‘光尘’才能破解，古道尽头的月光花能提炼光尘。我刚才去古道取花，遇到了小陷阱，还好没事。",
+                scene: "暗影洞穴入口 - 夜晚",
+                bgDesc: "暗影洞穴入口，巨大的石门紧闭，石门上覆盖着黑色的暗影屏障，散发着阴冷的气息",
+                bgImage: "images/cave_entrance.jpg", // 复用暗影洞穴入口图
+                showCharacters: ["leo", "aira"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "艾拉递给利奥光尘，屏障消散，两人一同进入洞穴。",
+                scene: "暗影洞穴入口 - 夜晚",
+                bgDesc: "暗影洞穴入口，巨大的石门紧闭，石门上覆盖着黑色的暗影屏障，散发着阴冷的气息",
+                bgImage: "images/cave_entrance.jpg", // 复用暗影洞穴入口图
+                showCharacters: ["leo", "aira"],
+                nextIndex: 26 // 汇合到决战前
+            },
+            // 分支B：选择右边古道
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥选择了右边的古道，小心翼翼地踏入布满藤蔓的路径。",
+                scene: "黑森林古道 - 夜晚",
+                bgDesc: "布满藤蔓和陷阱的古道，地面有隐藏的尖刺陷阱，头顶有掉落的石块，远处有一朵散发微光的花朵",
+                bgImage: "images/old_forest_path.jpg", // 新增：布满藤蔓的古道图
+                showCharacters: ["leo"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥小心翼翼前进，避开尖刺陷阱时，不慎触动机关，石块从头顶落下。",
+                scene: "黑森林古道 - 夜晚",
+                bgDesc: "布满藤蔓和陷阱的古道，地面有隐藏的尖刺陷阱，头顶有掉落的石块，远处有一朵散发微光的花朵",
+                bgImage: "images/old_forest_path.jpg", // 复用布满藤蔓的古道图
+                showCharacters: ["leo"]
+            },
+            {
+                type: "dialog",
+                speaker: "利奥",
+                content: "小心！",
+                scene: "黑森林古道 - 夜晚",
+                bgDesc: "布满藤蔓和陷阱的古道，地面有隐藏的尖刺陷阱，头顶有掉落的石块，远处有一朵散发微光的花朵",
+                bgImage: "images/old_forest_path.jpg", // 复用布满藤蔓的古道图
+                showCharacters: ["leo"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "突然一个黑影扑过来，将利奥推开，石块砸中黑影，露出真身——是一只受伤的小狐狸，皮毛沾着黑雾。",
+                scene: "黑森林古道 - 夜晚",
+                bgDesc: "布满藤蔓和陷阱的古道，地面有隐藏的尖刺陷阱，头顶有掉落的石块，远处有一朵散发微光的花朵",
+                bgImage: "images/old_forest_path.jpg", // 复用布满藤蔓的古道图
+                showCharacters: ["leo"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥犹豫片刻，将剩余的清醒药剂倒在狐狸伤口上，黑雾消散，狐狸叼起旁边的月光花，递给利奥。",
+                scene: "黑森林古道 - 夜晚",
+                bgDesc: "布满藤蔓和陷阱的古道，地面有隐藏的尖刺陷阱，头顶有掉落的石块，远处有一朵散发微光的花朵",
+                bgImage: "images/old_forest_path.jpg", // 复用布满藤蔓的古道图
+                showCharacters: ["leo"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "此时，艾拉赶到。",
+                scene: "黑森林古道 - 夜晚",
+                bgDesc: "布满藤蔓和陷阱的古道，地面有隐藏的尖刺陷阱，头顶有掉落的石块，远处有一朵散发微光的花朵",
+                bgImage: "images/old_forest_path.jpg", // 复用布满藤蔓的古道图
+                showCharacters: ["leo", "aira"]
+            },
+            {
+                type: "dialog",
+                speaker: "艾拉",
+                content: "这月光花能提炼光尘，破解莫尔根的暗影屏障！我本来想过来帮你，却看到你救了狐狸，它是森林的守护精灵，看来你选对了路。",
+                scene: "黑森林古道 - 夜晚",
+                bgDesc: "布满藤蔓和陷阱的古道，地面有隐藏的尖刺陷阱，头顶有掉落的石块，远处有一朵散发微光的花朵",
+                bgImage: "images/old_forest_path.jpg", // 复用布满藤蔓的古道图
+                showCharacters: ["leo", "aira"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "艾拉用月光花提炼出光尘，两人带着狐狸，一同进入暗影洞穴。",
+                scene: "黑森林古道 - 夜晚",
+                bgDesc: "布满藤蔓和陷阱的古道，地面有隐藏的尖刺陷阱，头顶有掉落的石块，远处有一朵散发微光的花朵",
+                bgImage: "images/old_forest_path.jpg", // 复用布满藤蔓的古道图
+                showCharacters: ["leo", "aira"],
+                nextIndex: 26 // 汇合到决战前
+            },
+            // 第三幕：决战与救赎（分支汇合）
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥和艾拉进入暗影洞穴深处，来到了莫尔根的祭坛。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 新增：暗影洞穴祭坛图
+                showCharacters: ["leo", "aira"]
+            },
+            {
+                type: "dialog",
+                speaker: "莫尔根",
+                content: "你们还是来了……我本不想伤害小镇，只是想让村民们帮我找到失散的女儿，可他们却把我当成怪物驱赶。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "dialog",
+                speaker: "艾拉",
+                content: "失散的女儿？难道你是二十年前离开小镇的魔法师梅林？",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "dialog",
+                speaker: "莫尔根",
+                content: "你怎么知道这个名字？",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "dialog",
+                speaker: "艾拉",
+                content: "我奶奶说过，当年有位善良的魔法师，女儿失踪后性情大变，隐居黑森林。我奶奶留给我的笔记里写着，你女儿喜欢在月光花旁玩耍，当年她只是迷路，被村民送到了邻镇抚养，现在已经成家了！",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "莫尔根周身的暗影能量开始波动，眼神动摇。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            // 选择节点2：劝说/威慑
+            {
+                type: "choice",
+                speaker: "旁白",
+                content: "面对动摇的莫尔根，你决定：",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"],
+                choices: [
+                    { text: "上前劝说莫尔根", nextIndex: 33 }, // 分支C
+                    { text: "用剑威慑莫尔根", nextIndex: 36 } // 分支D
+                ]
+            },
+            // 分支C：上前劝说莫尔根
+            {
+                type: "dialog",
+                speaker: "利奥",
+                content: "莫尔根先生，你的执念让小镇受苦，也让你自己被困在暗影里。艾拉没有骗你，我们可以帮你找到女儿！",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "莫尔根沉默片刻，看向祭坛下的村民，暗影能量逐渐减弱。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "dialog",
+                speaker: "莫尔根",
+                content: "我……我只是太想她了。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"],
+                nextIndex: 39 // 汇合到结局前
+            },
+            // 分支D：用剑威慑莫尔根
+            {
+                type: "dialog",
+                speaker: "利奥",
+                content: "莫尔根！停下你的诅咒！否则我不会手下留情！",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "利奥举起旧剑，光尘附着在剑刃上，发出微光。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "莫尔根看着发光的剑刃，又看向艾拉坚定的眼神，突然苦笑。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "dialog",
+                speaker: "莫尔根",
+                content: "罢了……这把剑的光芒，和当年我女儿喜欢的月光花一样。我累了。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根悬浮在空中，周身环绕暗影能量，祭坛下方绑着几位村民，黑雾从祭坛散发到小镇方向",
+                bgImage: "images/cave_altar.jpg", // 复用暗影洞穴祭坛图
+                showCharacters: ["leo", "aira", "morgan"],
+                nextIndex: 39 // 汇合到结局前
+            },
+            // 第四幕：好结局·微光重现
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "莫尔根解除诅咒，黑雾逐渐消散，祭坛下的村民获救。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根周身的暗影能量消散，黑雾慢慢褪去，祭坛下的村民松绑后站起身",
+                bgImage: "images/town_celebration.jpg", // 新增：小镇庆祝图（结局）
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "dialog",
+                speaker: "莫尔根",
+                content: "谢谢你们……帮我解开了多年的心结。我会用剩余的魔力修复小镇被黑雾破坏的地方。",
+                scene: "暗影洞穴祭坛 - 深夜",
+                bgDesc: "圆形祭坛中央，莫尔根周身的暗影能量消散，黑雾慢慢褪去，祭坛下的村民松绑后站起身",
+                bgImage: "images/town_celebration.jpg", // 复用小镇庆祝图
+                showCharacters: ["leo", "aira", "morgan"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "几天后，艾拉通过邻镇的关系，帮莫尔根找到了女儿。",
+                scene: "小镇广场 - 清晨",
+                bgDesc: "阳光洒满小镇，村民们在广场上庆祝，莫尔根和女儿相拥而泣，利奥站在一旁，旧剑恢复了光泽",
+                bgImage: "images/town_celebration.jpg", // 复用小镇庆祝图
+                showCharacters: []
+            },
+            {
+                type: "dialog",
+                speaker: "艾拉",
+                content: "利奥，是你拯救了小镇。",
+                scene: "小镇广场 - 清晨",
+                bgDesc: "阳光洒满小镇，村民们在广场上庆祝，莫尔根和女儿相拥而泣，利奥站在一旁，旧剑恢复了光泽",
+                bgImage: "images/town_celebration.jpg", // 复用小镇庆祝图
+                showCharacters: ["leo", "aira"]
+            },
+            {
+                type: "dialog",
+                speaker: "利奥",
+                content: "不是我一个人的功劳，是大家的信任和善良，才让一切变好。",
+                scene: "小镇广场 - 清晨",
+                bgDesc: "阳光洒满小镇，村民们在广场上庆祝，莫尔根和女儿相拥而泣，利奥站在一旁，旧剑恢复了光泽",
+                bgImage: "images/town_celebration.jpg", // 复用小镇庆祝图
+                showCharacters: ["leo", "aira"]
+            },
+            {
+                type: "narrator",
+                speaker: "旁白",
+                content: "小狐狸跑到利奥脚边，蹭了蹭他的裤腿，画面定格在众人的笑容和阳光中的小镇。",
+                scene: "小镇广场 - 清晨",
+                bgDesc: "阳光洒满小镇，村民们在广场上庆祝，莫尔根和女儿相拥而泣，利奥站在一旁，旧剑恢复了光泽",
+                bgImage: "images/town_celebration.jpg", // 复用小镇庆祝图
+                showCharacters: ["leo", "aira"]
+            },
+            {
+                type: "end",
+                speaker: "旁白",
+                content: "【剧终】感谢游玩《微光与暗影》",
+                scene: "小镇广场 - 清晨",
+                bgDesc: "阳光洒满小镇，村民们在广场上庆祝，莫尔根和女儿相拥而泣，利奥站在一旁，旧剑恢复了光泽",
+                bgImage: "images/town_celebration.jpg", // 复用小镇庆祝图
+                showCharacters: []
+            }
+        ];
+
+        // 2. 栈结构：用于存储剧情进度，实现回退功能
+        const storyStack = [];
+        // 当前剧情索引
+        let currentIndex = 0;
+        // 元素获取
+        const backBtn = document.getElementById("backBtn");
+        const bgContent = document.getElementById("bgContent");
+        const characterContainer = document.getElementById("characterContainer");
+        const textSpeaker = document.getElementById("textSpeaker");
+        const textContent = document.getElementById("textContent");
+        const textContainer = document.getElementById("textContainer");
+        const choiceContainer = document.getElementById("choiceContainer");
+
+        // 3. 初始化剧情
+        function initStory() {
+            pushToStack(currentIndex); // 初始节点入栈
+            showStoryNode(storyData[currentIndex]);
+            updateBackBtnStatus();
+        }
+
+        // 4. 入栈操作：保存当前剧情索引（排除重复入栈，比如连续点击推进时）
+        function pushToStack(index) {
+            if (storyStack[storyStack.length - 1] !== index) {
+                storyStack.push(index);
+            }
+        }
+
+        // 5. 出栈操作：回退到上一个剧情节点
+        function popFromStack() {
+            if (storyStack.length > 1) { // 保留最后一个节点，不允许回退到初始化前
+                storyStack.pop();
+                currentIndex = storyStack[storyStack.length - 1];
+                showStoryNode(storyData[currentIndex]);
+                updateBackBtnStatus();
+            }
+        }
+
+        // 6. 更新回退按钮状态
+        function updateBackBtnStatus() {
+            backBtn.disabled = storyStack.length <= 1;
+        }
+
+        // 7. 显示当前剧情节点（新增背景图设置逻辑）
+        function showStoryNode(node) {
+            // 更新背景图和描述
+            if (node.bgImage) {
+                bgContent.style.backgroundImage = `url(${node.bgImage})`;
+                bgContent.innerHTML = `${node.scene}<br>${node.bgDesc}`; // 用<br>换行避免文本覆盖图片
+            } else {
+                bgContent.style.backgroundImage = "none";
+                bgContent.textContent = `${node.scene}\n${node.bgDesc}`;
+            }
+            // 更新角色显示
+            hideAllCharacters();
+            if (node.showCharacters && node.showCharacters.length > 0) {
+                node.showCharacters.forEach(charId => {
+                    document.getElementById(charId).classList.add("show");
+                });
+            }
+            // 更新文本
+            textSpeaker.textContent = node.speaker;
+            textContent.textContent = node.content;
+            // 处理不同类型节点
+            if (node.type === "choice") {
+                // 显示选择分支
+                renderChoices(node.choices);
+                textContainer.style.pointerEvents = "none"; // 选择时禁止点击文本框推进
+            } else {
+                // 隐藏选择分支
+                choiceContainer.innerHTML = "";
+                textContainer.style.pointerEvents = "auto"; // 允许点击推进
+                // 处理结束节点
+                if (node.type === "end") {
+                    textContainer.style.pointerEvents = "none";
+                    textContainer.querySelector(".text-tip").textContent = "游戏结束";
+                }
+            }
+        }
+
+        // 8. 渲染选择分支按钮（修复了原代码的空渲染问题）
+        function renderChoices(choices) {
+            let choiceHtml = "";
+            choices.forEach(choice => {
+                choiceHtml += `<button class="choice-btn" onclick="chooseBranch(${choice.nextIndex})">${choice.text}</button>`;
+            });
+            choiceContainer.innerHTML = choiceHtml;
+            choiceContainer.style.display = "block";
+        }
+
+        // 9. 选择分支：跳转对应剧情节点
+        function chooseBranch(nextIndex) {
+            pushToStack(nextIndex); // 选择后的节点入栈
+            currentIndex = nextIndex;
+            showStoryNode(storyData[currentIndex]);
+            updateBackBtnStatus();
+        }
+
+        // 10. 推进剧情：点击文本框进入下一段
+        function nextDialog() {
+            // 非结束节点才允许推进
+            if (storyData[currentIndex].type !== "end") {
+                let nextIndex = currentIndex + 1;
+                // 如果当前节点有指定跳转索引（如分支汇合），则使用指定索引
+                if (storyData[currentIndex].hasOwnProperty("nextIndex")) {
+                    nextIndex = storyData[currentIndex].nextIndex;
+                }
+                pushToStack(nextIndex); // 推进后的节点入栈
+                currentIndex = nextIndex;
+                showStoryNode(storyData[currentIndex]);
+                updateBackBtnStatus();
+            }
+        }
+
+        // 11. 隐藏所有角色
+        function hideAllCharacters() {
+            const allCharacters = document.querySelectorAll(".character");
+            allCharacters.forEach(char => {
+                char.classList.remove("show");
+            });
+        }
+
+        // 12. 绑定回退按钮事件
+        backBtn.addEventListener("click", popFromStack);
+
+        // 13. 页面加载完成后初始化
+        window.onload = initStory;
+    </script>
+</body>
+</html>
