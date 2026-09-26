@@ -1,0 +1,38 @@
+MIT License
+
+Copyright (c) 2025 Durian2005
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Note on scope / 适用范围说明
+
+The MIT License above applies to the source code in this repository
+(the HTML / CSS / JavaScript contained in 曙光与暗影.html).
+
+The image assets under the images/ directory are AI-generated content
+(created with Doubao / 豆包) and are provided as-is together with this
+project. No exclusive copyright is claimed over them, and they are not
+covered by the MIT grant above. Please refer to the "素材说明" section
+in README.md for details.
+
+上述 MIT 许可仅适用于本仓库的源代码（曙光与暗影.html 中的 HTML / CSS / JavaScript）。
+images/ 目录下的图片为 AI 生成素材（使用豆包生成），随项目一并提供，
+不主张独占著作权，也不包含在上方 MIT 授权范围内。详见 README.md 的「素材说明」。
